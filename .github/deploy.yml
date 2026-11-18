@@ -1,0 +1,38 @@
+name: Deploy TaskHub
+
+on:
+  push:
+    branches: [ main ]     # 监听 main 分支的推送
+  workflow_dispatch:        # 允许在网页上手动触发
+
+# gh-pages 部署需要写入权限，缺这段会报 403
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      # GitHub Pages 不支持 History 模式回退，复制一份 404 页即可
+      - name: SPA fallback
+        run: cp dist/index.html dist/404.html
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist          # 打包产物目录
+          branch: gh-pages      # 部署到这个分支
